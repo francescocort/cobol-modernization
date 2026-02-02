@@ -1,0 +1,60 @@
+name: AI Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  vibe-review:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          
+      - name: Install Vibe
+        run: pip install mistral-vibe
+        
+      - name: Configure Vibe
+        run: |
+          mkdir -p ~/.vibe
+          cat > ~/.vibe/config.toml << EOF
+          [models]
+          default = "devstral-2"
+          
+          [agent]
+          enable_parallel = true
+          max_concurrent_agents = 4
+          EOF
+          
+      - name: Run AI Code Review
+        env:
+          MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
+        run: |
+          vibe --non-interactive --output review.json << 'PROMPT'
+          Analyze the code changes in this PR and generate:
+          1. Code quality assessment (1-10 score)
+          2. Security vulnerability scan
+          3. Performance impact analysis
+          4. Test coverage recommendations
+          
+          Output as structured JSON.
+          PROMPT
+          
+      - name: Post Review Comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const review = JSON.parse(fs.readFileSync('review.json', 'utf8'));
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## 🤖 AI Code Review\n\n${review.summary}`
+            });

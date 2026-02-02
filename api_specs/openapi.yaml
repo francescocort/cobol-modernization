@@ -1,0 +1,151 @@
+openapi: 3.0.0
+info:
+  title: Account Management System API
+  description: REST API for the modernized Account Management System
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000/api/v1
+    description: Local development server
+  - url: https://api.example.com/v1
+    description: Production server
+
+paths:
+  /accounts/balance:
+    get:
+      tags:
+        - Accounts
+      summary: Get current account balance
+      description: Retrieve the current balance of the account
+      operationId: getAccountBalance
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BalanceResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /accounts/credit:
+    post:
+      tags:
+        - Accounts
+      summary: Credit account
+      description: Add funds to the account
+      operationId: creditAccount
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AmountRequest'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BalanceResponse'
+        '400':
+          description: Invalid amount
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /accounts/debit:
+    post:
+      tags:
+        - Accounts
+      summary: Debit account
+      description: Withdraw funds from the account
+      operationId: debitAccount
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AmountRequest'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BalanceResponse'
+        '400':
+          description: Invalid amount or insufficient funds
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    BalanceResponse:
+      type: object
+      properties:
+        balance:
+          type: number
+          format: float
+          example: 1000.00
+        currency:
+          type: string
+          example: USD
+        timestamp:
+          type: string
+          format: date-time
+          example: '2023-12-01T12:00:00Z'
+      required:
+        - balance
+        - currency
+        - timestamp
+
+    AmountRequest:
+      type: object
+      properties:
+        amount:
+          type: number
+          format: float
+          example: 50.00
+      required:
+        - amount
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Invalid amount"
+        message:
+          type: string
+          example: "Amount must be a positive number"
+        timestamp:
+          type: string
+          format: date-time
+          example: '2023-12-01T12:00:00Z'
+      required:
+        - error
+        - message
+        - timestamp
+
+tags:
+  - name: Accounts
+    description: Account management operations
